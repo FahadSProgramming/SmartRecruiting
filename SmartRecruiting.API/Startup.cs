@@ -1,23 +1,23 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
+using AutoMapper;
+using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-
-using MediatR;
-using AutoMapper;
-using SmartRecruiting.Application.Interfaces;
 using SmartRecruiting.Application;
+using SmartRecruiting.Application.Interfaces;
 using SmartRecruiting.Persistence;
-using Microsoft.EntityFrameworkCore;
-using System.Reflection;
+using SmartRecruiting.Services.AuthenticationServices;
 
 namespace SmartRecruiting.API {
     public class Startup {
@@ -35,10 +35,14 @@ namespace SmartRecruiting.API {
 
             // Add AutoMapper
             services.AddAutoMapper(typeof(SmartRecruiting.Application.Infrastructure.MappingProfile).GetTypeInfo().Assembly);
-            
+
             // Add DbContext
             services.AddDbContext<ISmartRecruitingDbContext, SmartRecruitingDbContext>(options => options.UseSqlite(Configuration.GetConnectionString("ConnectionString")));
-            
+
+            // Add services
+            services.AddScoped<IPasswordGenerationService, PasswordGenerationService>();
+            services.AddScoped<IJwtTokenGenerationService, JwtTokenGenerationService>();
+
             services.AddControllers();
         }
 

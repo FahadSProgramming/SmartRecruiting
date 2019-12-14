@@ -20,10 +20,12 @@ namespace SmartRecruiting.Application.Users {
         public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Unit> {
             private readonly ISmartRecruitingDbContext _context;
             private readonly IMapper _mapper;
+            private readonly IPasswordGenerationService _passwordService;
 
-            public CreateUserCommandHandler(IMapper mapper, ISmartRecruitingDbContext context) {
+            public CreateUserCommandHandler(IMapper mapper, ISmartRecruitingDbContext context, IPasswordGenerationService passwordService) {
                 _context = context;
                 _mapper = mapper;
+                _passwordService = passwordService;
             }
 
             public async Task<Unit> Handle(CreateUserCommand request, CancellationToken cancellationToken) {
@@ -31,11 +33,15 @@ namespace SmartRecruiting.Application.Users {
                 if (userExists) {
                     throw new DuplicateEntityException(nameof(User), request.Username);
                 }
+                byte[] passwordHash, passwordSalt;
+
                 var entity = _mapper.Map<User>(request);
 
-                // TODO: populate the passwords
-                entity.PasswordHash = null;
-                entity.PasswordSalt = null;
+                // populate the passwords
+                _passwordService.GeneratePassword(request.Password, out passwordHash, out passwordSalt);
+
+                entity.PasswordHash = passwordHash;
+                entity.PasswordSalt = passwordSalt;
 
                 await _context.Users.AddAsync(entity);
                 await _context.SaveChangesAsync(cancellationToken);
