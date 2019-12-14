@@ -1,3 +1,5 @@
+using System.Text;
+using System.Security.Cryptography;
 using SmartRecruiting.Application.Interfaces;
 
 namespace SmartRecruiting.Services.AuthenticationServices {
@@ -7,7 +9,10 @@ namespace SmartRecruiting.Services.AuthenticationServices {
         }
 
         public void GeneratePassword(string password, out byte[] passwordHash, out byte[] passwordSalt) {
-            throw new System.NotImplementedException();
+            using(var hmac = new HMACSHA512()) {
+                passwordSalt = hmac.Key;
+                passwordHash = hmac.ComputeHash(Encoding.ASCII.GetBytes(password));
+            }
         }
     }
 }

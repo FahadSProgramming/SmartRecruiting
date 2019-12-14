@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using AutoMapper;
+using FluentValidation.AspNetCore;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -16,6 +17,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SmartRecruiting.Application;
 using SmartRecruiting.Application.Interfaces;
+using SmartRecruiting.API.Infrastructure;
 using SmartRecruiting.Persistence;
 using SmartRecruiting.Services.AuthenticationServices;
 
@@ -40,10 +42,13 @@ namespace SmartRecruiting.API {
             services.AddDbContext<ISmartRecruitingDbContext, SmartRecruitingDbContext>(options => options.UseSqlite(Configuration.GetConnectionString("ConnectionString")));
 
             // Add services
+            services.Configure<Application.Common.TokenParameters>(Configuration.GetSection("Authentication:TokenConfiguration"));
+            services.AddOptions();
             services.AddScoped<IPasswordGenerationService, PasswordGenerationService>();
             services.AddScoped<IJwtTokenGenerationService, JwtTokenGenerationService>();
 
-            services.AddControllers();
+            services.AddControllers()
+                .AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<ISmartRecruitingDbContext>());;
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -53,6 +58,7 @@ namespace SmartRecruiting.API {
             }
 
             //app.UseHttpsRedirection();
+            app.UseExceptionHandling();
 
             app.UseRouting();
 
