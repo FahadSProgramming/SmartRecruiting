@@ -1,0 +1,19 @@
+<form #loginForm="ngForm" class="">
+  <input
+    class="form-control mr-sm-2 mb-2"
+    type="text"
+    placeholder="Username"
+    name="Username"
+    [(ngModel)]="model.Username"
+  />
+  <input
+    class="form-control mr-sm-2 mb-2"
+    type="password"
+    placeholder="Password"
+    name="Password"
+    [(ngModel)]="model.Password"
+  />
+
+  <button type="submit" class="btn btn-primary btn-sm btn-block">Login</button>
+  <a href="#" class="badge badge-dark float-right mt-1">Forgot your password?</a>
+</form>

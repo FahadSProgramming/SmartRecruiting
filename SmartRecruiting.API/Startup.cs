@@ -6,15 +6,19 @@ using System.Threading.Tasks;
 using AutoMapper;
 using FluentValidation.AspNetCore;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using SmartRecruiting.Application;
 using SmartRecruiting.Application.Interfaces;
 using SmartRecruiting.API.Infrastructure;
@@ -47,7 +51,20 @@ namespace SmartRecruiting.API {
             services.AddScoped<IPasswordGenerationService, PasswordGenerationService>();
             services.AddScoped<IJwtTokenGenerationService, JwtTokenGenerationService>();
 
-            services.AddControllers()
+            // Add Authentication
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options => {
+                    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.ASCII.GetBytes(Configuration.GetSection("Authentication:TokenConfiguration:SecurityKey").Value.ToString())),
+                    ValidateAudience = false,
+                    ValidateIssuer = false
+                    };
+                });
+
+            services.AddControllers(options => {
+                    options.Filters.Add(new AuthorizeFilter(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build()));
+                })
                 .AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<ISmartRecruitingDbContext>());;
         }
 
@@ -61,7 +78,8 @@ namespace SmartRecruiting.API {
             app.UseExceptionHandling();
 
             app.UseRouting();
-
+            
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints => {
